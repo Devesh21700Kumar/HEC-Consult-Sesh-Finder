@@ -17,6 +17,7 @@ export default function ProfilePage() {
   const [form, setForm] = useState({
     first_name: '',
     last_name: '',
+    phone_number: '',
     level: '' as 'Beginner' | 'Medium' | 'Advanced' | '',
     consulting: false,
     mna: false,
@@ -39,6 +40,7 @@ export default function ProfilePage() {
           setForm({
             first_name: profileData.first_name || '',
             last_name: profileData.last_name || '',
+            phone_number: profileData.phone_number || '',
             level: profileData.level || '',
             consulting: profileData.consulting,
             mna: profileData.mna,
@@ -70,6 +72,7 @@ export default function ProfilePage() {
       await createOrUpdateProfile(user.id, {
         first_name: form.first_name || null,
         last_name: form.last_name || null,
+        phone_number: form.phone_number || null,
         level: form.level || null,
         consulting: form.consulting,
         mna: form.mna,
@@ -148,6 +151,19 @@ export default function ProfilePage() {
                     placeholder="Enter your last name"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Phone Number (Optional)
+                </label>
+                <input
+                  type="tel"
+                  value={form.phone_number}
+                  onChange={(e) => setForm({ ...form, phone_number: e.target.value })}
+                  className="input-field"
+                  placeholder="Enter your phone number"
+                />
               </div>
 
               <div>

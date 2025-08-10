@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabaseClient'
 import { getProfile, createOrUpdateProfile } from '../lib/profileUtils'
 import { SessionWithParticipants, Profile } from '../types'
 import { formatDate, formatTime } from '../lib/dateUtils'
-import { Calendar, Users, Plus, Video, MapPin } from 'lucide-react'
+import { Calendar, Users, Plus, Video, MapPin, Phone, Clock, TrendingUp } from 'lucide-react'
 import AuthGuard from '../components/AuthGuard'
 import Navbar from '../components/Navbar'
 
@@ -36,6 +36,7 @@ export default function DashboardPage() {
               email: user.email || '',
               first_name: null,
               last_name: null,
+              phone_number: null,
               level: null,
               consulting: false,
               mna: false,
@@ -72,6 +73,16 @@ export default function DashboardPage() {
     }
   }
 
+  const getUpcomingSessions = () => {
+    const today = new Date().toISOString().split('T')[0]
+    return sessions.filter(session => session.date >= today)
+  }
+
+  const getPastSessions = () => {
+    const today = new Date().toISOString().split('T')[0]
+    return sessions.filter(session => session.date < today)
+  }
+
   if (loading) {
     return (
       <AuthGuard>
@@ -81,6 +92,9 @@ export default function DashboardPage() {
       </AuthGuard>
     )
   }
+
+  const upcomingSessions = getUpcomingSessions()
+  const pastSessions = getPastSessions()
 
   return (
     <AuthGuard>
@@ -106,6 +120,51 @@ export default function DashboardPage() {
                 </p>
               </div>
             )}
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="card">
+              <div className="flex items-center">
+                <Calendar className="h-8 w-8 text-blue-500 mr-3" />
+                <div>
+                  <p className="text-sm text-gray-600">Total Sessions</p>
+                  <p className="text-2xl font-bold text-gray-900">{sessions.length}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="card">
+              <div className="flex items-center">
+                <Clock className="h-8 w-8 text-green-500 mr-3" />
+                <div>
+                  <p className="text-sm text-gray-600">Upcoming</p>
+                  <p className="text-2xl font-bold text-gray-900">{upcomingSessions.length}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="card">
+              <div className="flex items-center">
+                <TrendingUp className="h-8 w-8 text-purple-500 mr-3" />
+                <div>
+                  <p className="text-sm text-gray-600">Completed</p>
+                  <p className="text-2xl font-bold text-gray-900">{pastSessions.length}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="card">
+              <div className="flex items-center">
+                <Users className="h-8 w-8 text-orange-500 mr-3" />
+                <div>
+                  <p className="text-sm text-gray-600">Partners</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {new Set(sessions.flatMap(s => [s.participant1, s.participant2]).filter(Boolean)).size - 1}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Quick Actions */}
@@ -150,21 +209,26 @@ export default function DashboardPage() {
               </Link>
             </div>
 
-            {sessions.length === 0 ? (
+            {upcomingSessions.length === 0 ? (
               <div className="text-center py-8">
                 <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No upcoming sessions</h3>
                 <p className="text-gray-600 mb-4">Create your first session to get started</p>
-                <Link href="/sessions/create" className="btn-primary">
-                  Create Session
-                </Link>
+                <div className="flex justify-center space-x-3">
+                  <Link href="/sessions/match" className="btn-secondary">
+                    Find Partners
+                  </Link>
+                  <Link href="/sessions/create" className="btn-primary">
+                    Create Session
+                  </Link>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
-                {sessions.slice(0, 5).map((session) => (
-                  <div key={session.id} className="border border-gray-200 rounded-lg p-4">
+                {upcomingSessions.slice(0, 5).map((session) => (
+                  <div key={session.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
                     <div className="flex justify-between items-start">
-                      <div>
+                      <div className="flex-1">
                         <h3 className="font-medium text-gray-900">
                           {session.topic || 'Case Study Session'}
                         </h3>
@@ -181,24 +245,55 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       
-                      {session.meet_link && (
-                        <a
-                          href={session.meet_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn-secondary text-sm"
+                      <div className="flex items-center space-x-2">
+                        {session.meet_link && (
+                          <a
+                            href={session.meet_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn-secondary text-sm"
+                          >
+                            Join Meeting
+                          </a>
+                        )}
+                        <Link
+                          href={`/sessions/${session.id}`}
+                          className="text-blue-600 hover:text-blue-800 text-sm"
                         >
-                          Join Meeting
-                        </a>
-                      )}
+                          View Details
+                        </Link>
+                      </div>
                     </div>
                     
                     {session.participant1_profile && session.participant2_profile && (
-                      <div className="mt-3 text-sm text-gray-600">
-                        <span>With: </span>
-                        <span className="font-medium">
-                          {session.participant1_profile.first_name || 'Student'} & {session.participant2_profile.first_name || 'Student'}
-                        </span>
+                      <div className="mt-3 space-y-2">
+                        <div className="text-sm text-gray-600">
+                          <span className="font-medium">Participants:</span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="text-sm">
+                            <span className="font-medium">
+                              {session.participant1_profile.first_name || 'Student'} {session.participant1_profile.last_name || ''}
+                            </span>
+                            {session.participant1_profile.phone_number && (
+                              <div className="flex items-center text-xs text-gray-500 mt-1">
+                                <Phone className="h-3 w-3 mr-1" />
+                                {session.participant1_profile.phone_number}
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-sm">
+                            <span className="font-medium">
+                              {session.participant2_profile.first_name || 'Student'} {session.participant2_profile.last_name || ''}
+                            </span>
+                            {session.participant2_profile.phone_number && (
+                              <div className="flex items-center text-xs text-gray-500 mt-1">
+                                <Phone className="h-3 w-3 mr-1" />
+                                {session.participant2_profile.phone_number}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>

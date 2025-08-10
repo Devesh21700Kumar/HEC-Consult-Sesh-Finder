@@ -5,13 +5,16 @@ A Next.js application for HEC Paris students to manage case study sessions, find
 ## Features
 
 - 🔐 **HEC Email Authentication** - Only @hec.edu emails allowed
-- 👥 **Session Management** - Create and manage case study sessions
-- 🤝 **Smart Pairing** - Algorithm to match students for sessions
+- 👥 **Session Management** - Create, edit, and delete case study sessions
+- 🤝 **Smart Pairing** - Algorithm to match students for sessions with duplicate prevention
 - 📅 **Manual Meet Links** - Users can enter their own Google Meet links
-- 📱 **Responsive UI** - Beautiful Tailwind CSS interface
+- 📱 **Responsive UI** - Beautiful Tailwind CSS interface with enhanced UX
 - 🔒 **Row Level Security** - Secure data access with Supabase RLS
-- 👤 **Profile Management** - Complete user profiles with skills and interests
+- 👤 **Profile Management** - Complete user profiles with skills, interests, and phone numbers
 - 📧 **Email Integration** - Ready for email notifications (SMTP/SendGrid)
+- 📊 **Dashboard Analytics** - Session statistics and overview
+- 🚫 **Duplicate Prevention** - Prevents same-day matches with existing partners
+- ✏️ **Full CRUD Operations** - Complete session editing and deletion capabilities
 
 ## Tech Stack
 
@@ -44,7 +47,9 @@ npm install
 ### 2. Set up Supabase
 
 1. Create a new Supabase project at [supabase.com](https://supabase.com)
-2. Run the SQL migration in `supabase/migrations/001_initial_schema.sql`
+2. Run the SQL migrations in order:
+   - `supabase/migrations/001_initial_schema.sql`
+   - `supabase/migrations/002_add_phone_number.sql`
 3. Enable Email Auth in Authentication > Settings
 4. Copy your project URL and anon key
 
@@ -80,6 +85,7 @@ create table profiles (
   first_name text,
   last_name text,
   email text unique,
+  phone_number text,
   level text check (level in ('Beginner', 'Medium', 'Advanced')),
   consulting boolean default false,
   mna boolean default false,
@@ -109,14 +115,14 @@ create table sessions (
 hec-session-manager/
 ├── src/
 │   ├── pages/              # Next.js pages
-│   │   ├── index.tsx       # Dashboard
+│   │   ├── index.tsx       # Dashboard with analytics
 │   │   ├── login.tsx       # Login page
 │   │   ├── profile.tsx     # User profile management
 │   │   └── sessions/       # Session management
-│   │       ├── index.tsx   # All sessions list
+│   │       ├── index.tsx   # All sessions list with CRUD
 │   │       ├── create.tsx  # Create new session
-│   │       ├── match.tsx   # Find study partners
-│   │       └── [id].tsx    # Individual session view
+│   │       ├── match.tsx   # Find study partners with duplicate prevention
+│   │       └── [id].tsx    # Individual session view/edit
 │   ├── components/         # React components
 │   │   ├── AuthGuard.tsx   # Authentication wrapper
 │   │   └── Navbar.tsx      # Navigation
@@ -131,7 +137,8 @@ hec-session-manager/
 │   └── types/             # TypeScript types
 ├── supabase/              # Database migrations
 │   └── migrations/
-│       └── 001_initial_schema.sql
+│       ├── 001_initial_schema.sql
+│       └── 002_add_phone_number.sql
 └── public/               # Static assets
 ```
 
@@ -147,37 +154,63 @@ hec-session-manager/
 
 - **Create Sessions**: Users can schedule case study sessions with date, time, format, and topic
 - **Manual Meet Links**: For video calls, users can enter their own Google Meet links
+- **Edit Sessions**: Full editing capabilities for all session details
+- **Delete Sessions**: Safe deletion with confirmation dialogs
 - **Find Partners**: Algorithm matches students based on availability and preferences
-- **Session Editing**: Users can modify session details including Meet links
-- **Profile Management**: Complete user profiles with skill levels and interests
+- **Duplicate Prevention**: Prevents creating multiple sessions with the same person on the same day
+- **Profile Management**: Complete user profiles with skill levels, interests, and phone numbers
 
 ## Key Features
 
 ### Profile Management
 - First name, last name, email
+- **Phone number** (optional field for contact)
 - Skill level (Beginner, Medium, Advanced)
 - Interest areas (Consulting, M&A, Quantitative)
 
-### Session Creation
-- Date and time selection
+### Session Creation & Management
+- Date and time selection with predefined slots
 - Format choice (Video Call or In-person)
 - Topic description
 - Manual Google Meet link entry for video calls
+- **Full editing capabilities** for all session details
+- **Safe deletion** with confirmation dialogs
 
 ### Partner Matching
-- View all available students
-- Compatibility scoring based on interests
+- View all available students with contact information
+- Compatibility scoring based on interests and levels
+- **Duplicate match prevention** - warns if already matched today
 - One-click session creation with selected partner
+- **Phone numbers displayed** for easy communication
 
 ### Session Management
-- View all your sessions
-- Edit session details
-- Update Meet links
-- Join meetings directly
+- View all your sessions in an organized grid layout
+- **Edit session details** including Meet links
+- **Delete sessions** with confirmation
+- Join meetings directly from session cards
+- **Contact information** for all participants
+
+### Dashboard Analytics
+- **Session statistics**: Total, upcoming, completed sessions
+- **Partner count**: Number of unique study partners
+- **Quick actions**: Easy access to create sessions and find partners
+- **Upcoming sessions**: Overview of next 5 sessions with participant details
 
 ## API Routes
 
 - `/api/sessions/generate-meet-link` - Placeholder for Meet link generation (manual entry preferred)
+
+## Database Migrations
+
+### Migration 001: Initial Schema
+- Creates `profiles` and `sessions` tables
+- Sets up Row Level Security policies
+- Adds indexes for performance
+
+### Migration 002: Phone Number Support
+- Adds `phone_number` field to profiles table
+- Updates RLS policy to allow all logged-in users to view profiles
+- Adds delete policy for sessions
 
 ## Deployment
 
@@ -195,6 +228,32 @@ The app can be deployed to any Node.js hosting platform:
 - Railway
 - DigitalOcean App Platform
 
+## User Experience Improvements
+
+### Enhanced Navigation
+- **Quick action buttons** on dashboard
+- **Find Partners** button prominently displayed
+- **Back navigation** on detail pages
+- **Consistent iconography** throughout the app
+
+### Better Information Display
+- **Phone numbers** shown in participant cards
+- **Session statistics** on dashboard
+- **Contact information** for easy communication
+- **Improved session cards** with better layout
+
+### Smart Features
+- **Duplicate match detection** prevents scheduling conflicts
+- **Session editing** without page reload
+- **Confirmation dialogs** for destructive actions
+- **Responsive design** for all screen sizes
+
+### Data Management
+- **Full CRUD operations** for sessions
+- **Profile completion** prompts for new users
+- **Session filtering** (upcoming vs past)
+- **Partner analytics** and statistics
+
 ## Future Enhancements
 
 - Email notifications for matched pairs
@@ -202,6 +261,9 @@ The app can be deployed to any Node.js hosting platform:
 - Session reminders
 - Advanced pairing algorithms
 - Export functionality
+- Group sessions (more than 2 participants)
+- Session templates
+- Automated scheduling suggestions
 
 ## Contributing
 

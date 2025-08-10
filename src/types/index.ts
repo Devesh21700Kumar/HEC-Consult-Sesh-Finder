@@ -3,6 +3,7 @@ export interface Profile {
   first_name: string | null
   last_name: string | null
   email: string
+  phone_number: string | null
   level: 'Beginner' | 'Medium' | 'Advanced' | null
   consulting: boolean
   mna: boolean

@@ -4,6 +4,7 @@ create table profiles (
   first_name text,
   last_name text,
   email text unique,
+  phone_number text,
   level text check (level in ('Beginner', 'Medium', 'Advanced')),
   consulting boolean default false,
   mna boolean default false,
@@ -29,8 +30,9 @@ alter table profiles enable row level security;
 alter table sessions enable row level security;
 
 -- Create policies
-create policy "Users can view their own profile" on profiles
-  for select using (auth.uid() = id);
+create policy "Anyone logged in can view all profiles" on profiles
+  for select
+  using (true);
 
 create policy "Users can update their own profile" on profiles
   for update using (auth.uid() = id);
@@ -46,6 +48,9 @@ create policy "Users can create sessions" on sessions
 
 create policy "Users can update sessions they participate in" on sessions
   for update using (auth.uid() = participant1 or auth.uid() = participant2);
+
+create policy "Users can delete sessions they participate in" on sessions
+  for delete using (auth.uid() = participant1 or auth.uid() = participant2);
 
 -- Create indexes for better performance
 create index idx_profiles_email on profiles(email);
