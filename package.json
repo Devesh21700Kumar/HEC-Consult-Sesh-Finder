@@ -1,36 +1,33 @@
 {
-  "name": "hec-session-manager",
-  "version": "1.0.0",
+  "name": "my-buddy",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "lint": "next lint"
   },
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "^0.8.7",
-    "@supabase/supabase-js": "^2.38.0",
-    "autoprefixer": "^10.4.16",
+    "@supabase/supabase-js": "^2.38.4",
     "clsx": "^2.0.0",
     "date-fns": "^2.30.0",
-    "google-auth-library": "^9.4.1",
-    "googleapis": "^128.0.0",
     "lucide-react": "^0.294.0",
     "next": "14.0.0",
-    "postcss": "^8.4.32",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "tailwind-merge": "^2.2.0",
-    "tailwindcss": "^3.3.0"
+    "react": "^18",
+    "react-dom": "^18",
+    "tailwind-merge": "^2.0.0"
   },
   "devDependencies": {
-    "@types/node": "^24.2.1",
-    "@types/react": "^19.1.9",
-    "@types/react-dom": "^19.1.7",
-    "eslint": "^8.56.0",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.0.1",
+    "eslint": "^8",
     "eslint-config-next": "14.0.0",
-    "typescript": "^5.9.2"
+    "postcss": "^8",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5"
   }
 }

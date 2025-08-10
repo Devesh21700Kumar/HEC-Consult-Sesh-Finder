@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
+import { supabase } from '../lib/supabaseClient'
 import { User, LogOut, Calendar, Users, Settings } from 'lucide-react'
+import Image from 'next/image'
 
 export default function Navbar() {
   const router = useRouter()
@@ -18,9 +19,15 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-8">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">H</span>
+            <Link href="/" className="flex items-center space-x-3">
+              <div className="flex items-center">
+                <Image
+                  src="/assets/HEC.png"
+                  alt="MBB Logo"
+                  width={38}
+                  height={38}
+                  className="w-8 h-8"
+                />
               </div>
               <span className="text-xl font-bold text-gray-900">HEC Sessions</span>
             </Link>

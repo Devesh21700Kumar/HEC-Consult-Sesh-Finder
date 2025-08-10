@@ -1,0 +1,22 @@
+{
+  "name": "My Buddy - HEC Session Manager",
+  "short_name": "My Buddy",
+  "description": "Connect with HEC Paris students for case study sessions",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/assets/HEC.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/HEC.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

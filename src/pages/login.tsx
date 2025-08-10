@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabaseClient";
 import { validateEmail } from "../lib/matchAlgorithm";
 import { Mail, Lock, AlertCircle, CheckCircle, UserPlus } from "lucide-react";
 import AuthGuard from "../components/AuthGuard";
+import Image from "next/image";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -68,7 +69,7 @@ export default function LoginPage() {
       if (error) {
         setError(error.message);
       } else {
-        setMessage('Check your email for the confirmation link!')
+        setMessage("Check your email for the confirmation link!");
         setIsSignUp(false); // Switch back to login
       }
     } catch (err) {
@@ -90,11 +91,17 @@ export default function LoginPage() {
         <div className="max-w-md w-full">
           <div className="card">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-white text-2xl font-bold">H</span>
+              <div className="flex items-center justify-center mb-4">
+                <Image
+                  src="/assets/HEC.png"
+                  alt="MBB Logo"
+                  width={64}
+                  height={64}
+                  className="w-16 h-16"
+                />
               </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                Welcome to HEC Sessions
+                Welcome to HEC Case Buddy
               </h1>
               <p className="text-gray-600">
                 {isSignUp

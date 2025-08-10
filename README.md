@@ -1,6 +1,8 @@
-# HEC Session Manager
+# My Buddy - HEC Session Manager
 
 A Next.js application for HEC Paris students to manage case study sessions, find study partners, and schedule meetings with manual Google Meet link entry.
+
+**🌐 Live Demo:** [https://find-ur-consult-buddy-hec.netlify.app/](https://find-ur-consult-buddy-hec.netlify.app/)
 
 ## Features
 
@@ -24,6 +26,7 @@ A Next.js application for HEC Paris students to manage case study sessions, find
 - **Authentication**: Supabase Auth
 - **Meeting Links**: Manual Google Meet link entry
 - **Icons**: Lucide React
+- **Deployment**: Netlify
 
 ## Prerequisites
 
@@ -40,7 +43,7 @@ nvm use lts/iron
 
 ```bash
 git clone <your-repo>
-cd hec-session-manager
+cd my-buddy
 npm install
 ```
 
@@ -112,7 +115,7 @@ create table sessions (
 ## Project Structure
 
 ```
-hec-session-manager/
+my-buddy/
 ├── src/
 │   ├── pages/              # Next.js pages
 │   │   ├── index.tsx       # Dashboard with analytics
@@ -135,11 +138,16 @@ hec-session-manager/
 │   │   └── meetLinkGenerator.ts
 │   ├── styles/            # Global styles
 │   └── types/             # TypeScript types
+├── public/               # Static assets
+│   ├── assets/           # Assets
+│   │   ├── HEC.png       # HEC Logo
+│   │   └── favicon.ico   # Favicon
+│   └── site.webmanifest  # PWA manifest
 ├── supabase/              # Database migrations
 │   └── migrations/
 │       ├── 001_initial_schema.sql
 │       └── 002_add_phone_number.sql
-└── public/               # Static assets
+└── package.json
 ```
 
 ## Authentication Flow
@@ -214,17 +222,15 @@ hec-session-manager/
 
 ## Deployment
 
-### Vercel (Recommended)
+### Netlify (Current)
 
-1. Push to GitHub
-2. Connect to Vercel
-3. Add environment variables
-4. Deploy
+The app is currently deployed on Netlify at:
+[https://find-ur-consult-buddy-hec.netlify.app/](https://find-ur-consult-buddy-hec.netlify.app/)
 
 ### Other Platforms
 
 The app can be deployed to any Node.js hosting platform:
-- Netlify
+- Vercel
 - Railway
 - DigitalOcean App Platform
 
