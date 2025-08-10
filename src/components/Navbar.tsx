@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabaseClient'
-import { User, LogOut, Calendar, Users, Settings } from 'lucide-react'
+import { User, LogOut, Calendar, Users, Settings, BookOpen } from 'lucide-react'
 import Image from 'next/image'
 
 export default function Navbar() {
@@ -44,6 +44,10 @@ export default function Navbar() {
               <Link href="/sessions/match" className="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
                 <Users className="h-4 w-4" />
                 <span>Match</span>
+              </Link>
+              <Link href="/resources" className="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
+                <BookOpen className="h-4 w-4" />
+                <span>Resources</span>
               </Link>
             </div>
           </div>

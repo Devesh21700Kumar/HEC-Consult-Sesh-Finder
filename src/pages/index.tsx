@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabaseClient'
 import { getProfile, createOrUpdateProfile } from '../lib/profileUtils'
 import { SessionWithParticipants, Profile } from '../types'
 import { formatDate, formatTime } from '../lib/dateUtils'
-import { Calendar, Users, Plus, Video, MapPin, Phone, Clock, TrendingUp } from 'lucide-react'
+import { Calendar, Users, Plus, Video, MapPin, Phone, Clock, TrendingUp, BookOpen } from 'lucide-react'
 import AuthGuard from '../components/AuthGuard'
 import Navbar from '../components/Navbar'
 
@@ -168,7 +168,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Link href="/sessions/create" className="card hover:shadow-lg transition-shadow">
               <div className="flex items-center">
                 <Plus className="h-8 w-8 text-primary-600 mr-4" />
@@ -195,6 +195,16 @@ export default function DashboardPage() {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">View All</h3>
                   <p className="text-gray-600">See all your sessions</p>
+                </div>
+              </div>
+            </Link>
+
+            <Link href="/resources" className="card hover:shadow-lg transition-shadow">
+              <div className="flex items-center">
+                <BookOpen className="h-8 w-8 text-primary-600 mr-4" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Resources</h3>
+                  <p className="text-gray-600">Academic materials & cabpooling</p>
                 </div>
               </div>
             </Link>
