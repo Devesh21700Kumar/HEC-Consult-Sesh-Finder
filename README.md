@@ -1,15 +1,17 @@
 # HEC Session Manager
 
-A Next.js application for HEC Paris students to manage case study sessions, find study partners, and schedule meetings with real Google Meet links.
+A Next.js application for HEC Paris students to manage case study sessions, find study partners, and schedule meetings with manual Google Meet link entry.
 
 ## Features
 
 - 🔐 **HEC Email Authentication** - Only @hec.edu emails allowed
 - 👥 **Session Management** - Create and manage case study sessions
 - 🤝 **Smart Pairing** - Algorithm to match students for sessions
-- 📅 **Google Meet Integration** - Automatic Meet link generation
+- 📅 **Manual Meet Links** - Users can enter their own Google Meet links
 - 📱 **Responsive UI** - Beautiful Tailwind CSS interface
 - 🔒 **Row Level Security** - Secure data access with Supabase RLS
+- 👤 **Profile Management** - Complete user profiles with skills and interests
+- 📧 **Email Integration** - Ready for email notifications (SMTP/SendGrid)
 
 ## Tech Stack
 
@@ -17,8 +19,17 @@ A Next.js application for HEC Paris students to manage case study sessions, find
 - **Styling**: Tailwind CSS
 - **Database**: Supabase (PostgreSQL)
 - **Authentication**: Supabase Auth
-- **Meeting Links**: Google Calendar API
+- **Meeting Links**: Manual Google Meet link entry
 - **Icons**: Lucide React
+
+## Prerequisites
+
+Before running any npm commands, install the correct Node.js version:
+
+```bash
+nvm install lts/iron
+nvm use lts/iron
+```
 
 ## Quick Start
 
@@ -46,10 +57,6 @@ Create `.env.local`:
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-
-# Google Service Account (optional, for Meet links)
-GOOGLE_SERVICE_ACCOUNT_EMAIL=your-service-account@project.iam.gserviceaccount.com
-GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYour private key here\n-----END PRIVATE KEY-----\n"
 
 # App Configuration
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -104,17 +111,27 @@ hec-session-manager/
 │   ├── pages/              # Next.js pages
 │   │   ├── index.tsx       # Dashboard
 │   │   ├── login.tsx       # Login page
+│   │   ├── profile.tsx     # User profile management
 │   │   └── sessions/       # Session management
+│   │       ├── index.tsx   # All sessions list
+│   │       ├── create.tsx  # Create new session
+│   │       ├── match.tsx   # Find study partners
+│   │       └── [id].tsx    # Individual session view
 │   ├── components/         # React components
 │   │   ├── AuthGuard.tsx   # Authentication wrapper
 │   │   └── Navbar.tsx      # Navigation
 │   ├── lib/               # Utilities
 │   │   ├── supabaseClient.ts
+│   │   ├── supabaseAdmin.ts
+│   │   ├── profileUtils.ts
 │   │   ├── matchAlgorithm.ts
-│   │   └── dateUtils.ts
+│   │   ├── dateUtils.ts
+│   │   └── meetLinkGenerator.ts
 │   ├── styles/            # Global styles
 │   └── types/             # TypeScript types
 ├── supabase/              # Database migrations
+│   └── migrations/
+│       └── 001_initial_schema.sql
 └── public/               # Static assets
 ```
 
@@ -128,10 +145,39 @@ hec-session-manager/
 
 ## Session Management
 
-- **Create Sessions**: Users can schedule case study sessions
-- **Find Partners**: Algorithm matches students based on availability
-- **Google Meet**: Automatic Meet link generation for video calls
-- **Rescheduling**: Easy session modification and partner finding
+- **Create Sessions**: Users can schedule case study sessions with date, time, format, and topic
+- **Manual Meet Links**: For video calls, users can enter their own Google Meet links
+- **Find Partners**: Algorithm matches students based on availability and preferences
+- **Session Editing**: Users can modify session details including Meet links
+- **Profile Management**: Complete user profiles with skill levels and interests
+
+## Key Features
+
+### Profile Management
+- First name, last name, email
+- Skill level (Beginner, Medium, Advanced)
+- Interest areas (Consulting, M&A, Quantitative)
+
+### Session Creation
+- Date and time selection
+- Format choice (Video Call or In-person)
+- Topic description
+- Manual Google Meet link entry for video calls
+
+### Partner Matching
+- View all available students
+- Compatibility scoring based on interests
+- One-click session creation with selected partner
+
+### Session Management
+- View all your sessions
+- Edit session details
+- Update Meet links
+- Join meetings directly
+
+## API Routes
+
+- `/api/sessions/generate-meet-link` - Placeholder for Meet link generation (manual entry preferred)
 
 ## Deployment
 
@@ -148,6 +194,14 @@ The app can be deployed to any Node.js hosting platform:
 - Netlify
 - Railway
 - DigitalOcean App Platform
+
+## Future Enhancements
+
+- Email notifications for matched pairs
+- Calendar integration
+- Session reminders
+- Advanced pairing algorithms
+- Export functionality
 
 ## Contributing
 
