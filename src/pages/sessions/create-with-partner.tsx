@@ -1,72 +1,23 @@
-// Individual session creation has been disabled
-// Sessions can only be created through the match flow
-
-'use client'
-
-import { useRouter } from 'next/navigation'
-import { AlertCircle } from 'lucide-react'
-import AuthGuard from '../../components/AuthGuard'
-import Navbar from '../../components/Navbar'
-
-export default function CreateSessionPage() {
-  const router = useRouter()
-
-  return (
-    <AuthGuard>
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Session Creation Disabled</h1>
-            <p className="text-gray-600 mt-2">Individual sessions are no longer available</p>
-          </div>
-
-          <div className="card text-center py-12">
-            <AlertCircle className="h-16 w-16 text-yellow-500 mx-auto mb-6" />
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              Sessions Must Be Created Through Matching
-            </h2>
-            <p className="text-gray-600 mb-6 max-w-md mx-auto">
-              To create a session, you must first find and match with a study partner. 
-              Individual sessions are no longer supported.
-            </p>
-            <div className="space-y-3">
-              <button
-                onClick={() => router.push('/sessions/match')}
-                className="btn-primary w-full"
-              >
-                Find Study Partners
-              </button>
-              <button
-                onClick={() => router.push('/')}
-                className="btn-secondary w-full"
-              >
-                Back to Dashboard
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </AuthGuard>
-  )
-}
-
-/*
-// Original individual session creation code (commented out)
-
 'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabaseClient'
 import { getNextAvailableDate, getAvailableTimeSlots } from '../../lib/dateUtils'
-import { Calendar, Clock, Video, MapPin, Save, ArrowLeft, Link as LinkIcon } from 'lucide-react'
+import { Calendar, Clock, Video, MapPin, Save, ArrowLeft, Link as LinkIcon, Mail, Users } from 'lucide-react'
 import AuthGuard from '../../components/AuthGuard'
 import Navbar from '../../components/Navbar'
 
-export default function CreateSessionPage() {
+interface SelectedPartner {
+  id: string
+  name: string
+  email: string
+  phone?: string
+}
+
+export default function CreateSessionWithPartnerPage() {
   const router = useRouter()
+  const [selectedPartner, setSelectedPartner] = useState<SelectedPartner | null>(null)
   const [form, setForm] = useState({
     date: getNextAvailableDate(),
     time: '18:00',
@@ -76,6 +27,25 @@ export default function CreateSessionPage() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [sessionId, setSessionId] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Get partner info from sessionStorage
+    const partnerData = sessionStorage.getItem('selectedPartner')
+    if (partnerData) {
+      try {
+        const partner = JSON.parse(partnerData)
+        setSelectedPartner(partner)
+      } catch (err) {
+        setError('Invalid partner data')
+        router.push('/sessions/match')
+      }
+    } else {
+      setError('No partner selected')
+      router.push('/sessions/match')
+    }
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -84,12 +54,12 @@ export default function CreateSessionPage() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        setError('You must be logged in to create a session')
+      if (!user || !selectedPartner) {
+        setError('You must be logged in and have a partner selected')
         return
       }
 
-      const { error } = await supabase
+      const { data: newSession, error } = await supabase
         .from('sessions')
         .insert([{
           date: form.date,
@@ -97,20 +67,66 @@ export default function CreateSessionPage() {
           format: form.format,
           topic: form.topic || null,
           participant1: user.id,
-          participant2: null,
+          participant2: selectedPartner.id,
           meet_link: form.format === 'Video Call' && form.meet_link ? form.meet_link : null
         }])
+        .select()
+        .single()
 
       if (error) {
         setError(error.message)
       } else {
-        router.push('/')
+        setSuccess('Session created successfully!')
+        setSessionId(newSession.id)
+        // Clear partner data from sessionStorage
+        sessionStorage.removeItem('selectedPartner')
       }
     } catch (err) {
       setError('An error occurred while creating the session')
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSendEmail = () => {
+    if (!selectedPartner || !sessionId) return
+
+    const sessionDate = new Date(form.date).toLocaleDateString()
+    const sessionTime = form.time
+    
+    const subject = `Case Study Session Invitation - ${sessionDate} at ${sessionTime}`
+    
+    const body = `Hi ${selectedPartner.name},
+
+I'd like to invite you to a case study session on ${sessionDate} at ${sessionTime}.
+
+Session Details:
+- Date: ${sessionDate}
+- Time: ${sessionTime}
+- Format: ${form.format}
+${form.topic ? `- Topic: ${form.topic}` : ''}
+${form.meet_link ? `- Meeting Link: ${form.meet_link}` : ''}
+
+Please let me know if this works for you or if you'd like to suggest any changes.
+
+Best regards,
+[Your Name]`
+
+    // Create mailto link
+    const mailtoLink = `mailto:${selectedPartner.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    
+    // Open default email client
+    window.open(mailtoLink)
+  }
+
+  if (!selectedPartner) {
+    return (
+      <AuthGuard>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
+        </div>
+      </AuthGuard>
+    )
   }
 
   return (
@@ -125,16 +141,70 @@ export default function CreateSessionPage() {
               className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
+              Back to Partners
             </button>
-            <h1 className="text-3xl font-bold text-gray-900">Create New Session</h1>
-            <p className="text-gray-600 mt-2">Schedule a case study session</p>
+            <h1 className="text-3xl font-bold text-gray-900">Create Session with Partner</h1>
+            <p className="text-gray-600 mt-2">Schedule a case study session with your matched partner</p>
+          </div>
+
+          {/* Partner Info */}
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-start">
+              <Users className="h-5 w-5 text-blue-500 mr-2 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-medium text-blue-800">
+                  Session Partner
+                </h3>
+                <div className="text-sm text-blue-700 mt-1">
+                  <p><strong>Name:</strong> {selectedPartner.name}</p>
+                  <p><strong>Email:</strong> {selectedPartner.email}</p>
+                  {selectedPartner.phone && (
+                    <p><strong>Phone:</strong> {selectedPartner.phone}</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="card">
             {error && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                 <span className="text-red-700">{error}</span>
+              </div>
+            )}
+
+            {success && (
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-green-800">
+                      Session Created Successfully!
+                    </h3>
+                    <p className="text-sm text-green-700 mt-1">
+                      {success}
+                    </p>
+                    <div className="mt-3 flex space-x-3">
+                      <button
+                        onClick={handleSendEmail}
+                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      >
+                        <Mail className="h-4 w-4 mr-2" />
+                        Send Email Invitation
+                      </button>
+                      <a
+                        href={`/sessions/${sessionId}`}
+                        className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      >
+                        View Session Details
+                      </a>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -236,7 +306,7 @@ export default function CreateSessionPage() {
                 className="w-full btn-primary disabled:opacity-50 flex items-center justify-center"
               >
                 <Save className="h-4 w-4 mr-2" />
-                {loading ? 'Creating...' : 'Create Session'}
+                {loading ? 'Creating Session...' : 'Create Session with Partner'}
               </button>
             </form>
           </div>
@@ -245,4 +315,3 @@ export default function CreateSessionPage() {
     </AuthGuard>
   )
 }
-*/

@@ -168,17 +168,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Link href="/sessions/create" className="card hover:shadow-lg transition-shadow">
-              <div className="flex items-center">
-                <Plus className="h-8 w-8 text-primary-600 mr-4" />
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Create Session</h3>
-                  <p className="text-gray-600">Schedule a new case study session</p>
-                </div>
-              </div>
-            </Link>
-
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <Link href="/sessions/match" className="card hover:shadow-lg transition-shadow">
               <div className="flex items-center">
                 <Users className="h-8 w-8 text-primary-600 mr-4" />

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabaseClient'
 import { getAllProfiles } from '../../lib/profileUtils'
 import { checkExistingMatchOnDate } from '../../lib/matchAlgorithm'
@@ -10,6 +11,7 @@ import AuthGuard from '../../components/AuthGuard'
 import Navbar from '../../components/Navbar'
 
 export default function MatchPage() {
+  const router = useRouter()
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [sessions, setSessions] = useState<Session[]>([])
   const [currentUser, setCurrentUser] = useState<Profile | null>(null)
@@ -76,7 +78,7 @@ export default function MatchPage() {
       const today = new Date().toISOString().split('T')[0]
       const partner = profiles.find(p => p.id === partnerId)
       
-      // Check for existing match on the same day
+      // Check for existing match on the same day with this specific partner
       const hasExistingMatch = checkExistingMatchOnDate(sessions, user.id, partnerId, today)
       
       if (hasExistingMatch && partner) {
@@ -86,28 +88,21 @@ export default function MatchPage() {
         return
       }
 
-      // Create a new session with both participants
-      const { error } = await supabase
-        .from('sessions')
-        .insert([{
-          date: today,
-          time: '18:00',
-          format: 'Video Call',
-          topic: 'Case Study Session',
-          participant1: user.id,
-          participant2: partnerId,
-          meet_link: null
-        }])
-
-      if (error) {
-        setError(error.message)
-      } else {
-        setSuccess('Match created successfully! Check your sessions.')
-        // Reload data
-        await loadData()
+      // Instead of creating session immediately, redirect to session creation with partner info
+      if (partner) {
+        // Store partner info in sessionStorage for the session creation form
+        sessionStorage.setItem('selectedPartner', JSON.stringify({
+          id: partner.id,
+          name: `${partner.first_name || 'Student'} ${partner.last_name || ''}`,
+          email: partner.email,
+          phone: partner.phone_number
+        }))
+        
+        // Redirect to session creation with partner pre-filled
+        router.push('/sessions/create-with-partner')
       }
     } catch (err) {
-      setError('Failed to create match')
+      setError('Failed to process match')
     } finally {
       setMatching(false)
     }
@@ -296,7 +291,7 @@ export default function MatchPage() {
                             className="w-full btn-primary disabled:opacity-50 flex items-center justify-center"
                           >
                             <UserPlus className="h-4 w-4 mr-2" />
-                            {matching ? 'Creating Match...' : 'Match & Create Session'}
+                            {matching ? 'Processing...' : 'Match & Create Session'}
                           </button>
                         </div>
                       )
