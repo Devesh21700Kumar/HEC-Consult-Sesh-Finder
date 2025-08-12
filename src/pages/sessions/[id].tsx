@@ -190,9 +190,12 @@ export default function SessionDetailsPage() {
                       type="date"
                       value={form.date}
                       onChange={(e) => setForm({ ...form, date: e.target.value })}
-                      className="input-field"
+                      className="input-field bg-gray-100 cursor-not-allowed"
                       required
+                      disabled
+                      title="Session date cannot be changed after creation"
                     />
+                    <p className="text-xs text-gray-500 mt-1">Session date cannot be modified after creation</p>
                   </div>
 
                   <div>

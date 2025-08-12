@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabaseClient'
 import { getNextAvailableDate, getAvailableTimeSlots } from '../../lib/dateUtils'
-import { Calendar, Clock, Video, MapPin, Save, ArrowLeft, Link as LinkIcon, Mail, Users } from 'lucide-react'
+import { checkExistingMatchOnDate } from '../../lib/matchAlgorithm'
+import { Calendar, Clock, Video, MapPin, Save, ArrowLeft, Link as LinkIcon, Mail, Users, AlertCircle } from 'lucide-react'
 import AuthGuard from '../../components/AuthGuard'
 import Navbar from '../../components/Navbar'
 
@@ -29,6 +30,9 @@ export default function CreateSessionWithPartnerPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [sessions, setSessions] = useState<any[]>([])
+  const [showDuplicateAlert, setShowDuplicateAlert] = useState(false)
+  const [hasExistingMatch, setHasExistingMatch] = useState(false)
 
   useEffect(() => {
     // Get partner info from sessionStorage
@@ -47,15 +51,73 @@ export default function CreateSessionWithPartnerPage() {
     }
   }, [router])
 
+  useEffect(() => {
+    // Load user's sessions for duplicate checking
+    const loadSessions = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data: userSessions } = await supabase
+            .from('sessions')
+            .select('*')
+            .or(`participant1.eq.${user.id},participant2.eq.${user.id}`)
+            .order('date', { ascending: true })
+
+          setSessions(userSessions || [])
+        }
+      } catch (error) {
+        console.error('Error loading sessions:', error)
+      }
+    }
+
+    loadSessions()
+  }, [])
+
+  useEffect(() => {
+    // Check for duplicate sessions when date changes
+    const checkDuplicate = async () => {
+      if (selectedPartner && form.date) {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const existingMatch = checkExistingMatchOnDate(
+            sessions,
+            user.id,
+            selectedPartner.id,
+            form.date
+          )
+          setHasExistingMatch(existingMatch)
+          setShowDuplicateAlert(false) // Reset alert when date changes
+        }
+      }
+    }
+
+    checkDuplicate()
+  }, [form.date, selectedPartner, sessions])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setShowDuplicateAlert(false)
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user || !selectedPartner) {
         setError('You must be logged in and have a partner selected')
+        return
+      }
+
+      // Check for existing match on the selected date
+      const existingMatch = checkExistingMatchOnDate(
+        sessions,
+        user.id,
+        selectedPartner.id,
+        form.date
+      )
+
+      if (existingMatch) {
+        setShowDuplicateAlert(true)
+        setLoading(false)
         return
       }
 
@@ -170,6 +232,39 @@ Best regards,
             {error && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                 <span className="text-red-700">{error}</span>
+              </div>
+            )}
+
+            {showDuplicateAlert && selectedPartner && (
+              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-start">
+                  <AlertCircle className="h-5 w-5 text-yellow-500 mr-2 mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-medium text-yellow-800">
+                      Already matched on this date!
+                    </h3>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      You already have a session scheduled with{" "}
+                      {selectedPartner.name} on {form.date}. You
+                      can edit or delete the existing session in your sessions
+                      list.
+                    </p>
+                    <div className="mt-3 flex space-x-3">
+                      <button
+                        onClick={() => setShowDuplicateAlert(false)}
+                        className="text-sm text-yellow-800 underline"
+                      >
+                        Dismiss
+                      </button>
+                      <a
+                        href="/sessions"
+                        className="text-sm text-yellow-800 underline"
+                      >
+                        View Sessions
+                      </a>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -302,11 +397,11 @@ Best regards,
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || hasExistingMatch}
                 className="w-full btn-primary disabled:opacity-50 flex items-center justify-center"
               >
                 <Save className="h-4 w-4 mr-2" />
-                {loading ? 'Creating Session...' : 'Create Session with Partner'}
+                {loading ? 'Creating Session...' : hasExistingMatch ? 'Already matched on this date' : 'Create Session with Partner'}
               </button>
             </form>
           </div>
