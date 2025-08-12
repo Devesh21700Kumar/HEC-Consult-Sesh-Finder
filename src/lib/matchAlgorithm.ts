@@ -39,6 +39,6 @@ export function checkExistingMatchOnDate(
     const isParticipant1 = session.participant1 === userId1 || session.participant1 === userId2
     const isParticipant2 = session.participant2 === userId1 || session.participant2 === userId2
 
-    return isSameDate && (isParticipant1 || isParticipant2)
+    return isSameDate && (isParticipant1 && isParticipant2)
   })
 }
