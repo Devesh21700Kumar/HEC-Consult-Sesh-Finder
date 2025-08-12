@@ -104,12 +104,12 @@ export default function MatchPage() {
         today
       );
       // console.log(hasExistingMatch, "hasExistingMatch");
-      if (hasExistingMatch && partner) {
+      /*if (hasExistingMatch && partner) {
         setDuplicatePartner(partner);
         setShowDuplicateAlert(true);
         setMatching(false);
         return;
-      }
+      }*/
 
       // Instead of creating session immediately, redirect to session creation with partner info
       if (partner) {
