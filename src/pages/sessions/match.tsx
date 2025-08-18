@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
-import { getAllProfiles } from "../../lib/profileUtils";
+import { getAllProfiles, isProfileComplete, getProfileCompletionPercentage } from "../../lib/profileUtils";
 import { checkExistingMatchOnDate } from "../../lib/matchAlgorithm";
 import { Profile, Session } from "../../types";
 import {
@@ -34,6 +34,8 @@ export default function MatchPage() {
   const [duplicatePartner, setDuplicatePartner] = useState<Profile | null>(
     null
   );
+  const [profileComplete, setProfileComplete] = useState(false);
+  const [completionPercentage, setCompletionPercentage] = useState(0);
 
   useEffect(() => {
     loadData();
@@ -55,20 +57,30 @@ export default function MatchPage() {
           .single();
 
         setCurrentUser(currentProfile);
+        
+        // Check if profile is complete
+        const isComplete = isProfileComplete(currentProfile);
+        const completion = getProfileCompletionPercentage(currentProfile);
+        setProfileComplete(isComplete);
+        setCompletionPercentage(completion);
 
-        // Get all other profiles (excluding current user)
-        const allProfiles = await getAllProfiles();
-        const otherProfiles = allProfiles.filter((p) => p.id !== user.id);
-        setProfiles(otherProfiles);
+        // Only load other profiles if current user's profile is complete
+        if (isComplete) {
+          // Get all other profiles (excluding current user)
+          const allProfiles = await getAllProfiles();
+          const otherProfiles = allProfiles.filter((p) => p.id !== user.id);
+          setProfiles(otherProfiles);
 
-        // Get user's sessions
-        const { data: userSessions } = await supabase
-          .from("sessions")
-          .select("*")
-          .or(`participant1.eq.${user.id},participant2.eq.${user.id}`)
-          .order("date", { ascending: true });
+          // Get user's sessions
+          const { data: userSessions } = await supabase
+            .from("sessions")
+            .select("*")
+            .or(`participant1.eq.${user.id},participant2.eq.${user.id}`)
+            .order("date", { ascending: false })
+            .order("time", { ascending: false });
 
-        setSessions(userSessions || []);
+          setSessions(userSessions || []);
+        }
       }
     } catch (error) {
       console.error("Error loading match data:", error);
@@ -184,11 +196,100 @@ export default function MatchPage() {
     (a, b) => getCompatibilityScore(b) - getCompatibilityScore(a)
   );
 
+  // Check if a session is completed (past date)
+  const isSessionCompleted = (sessionDate: string) => {
+    const today = new Date().toISOString().split('T')[0];
+    return sessionDate < today;
+  };
+
   if (loading) {
     return (
       <AuthGuard>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
+        </div>
+      </AuthGuard>
+    );
+  }
+
+  // Show profile completion requirement if profile is incomplete
+  if (!profileComplete) {
+    return (
+      <AuthGuard>
+        <div className="min-h-screen bg-gray-50">
+          <Navbar />
+
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="card text-center py-12">
+              <div className="mb-6">
+                <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users className="h-12 w-12 text-blue-600" />
+                </div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                  Complete Your Profile First
+                </h1>
+                <p className="text-gray-600 mb-6">
+                  To find study partners, you need to complete your profile with your skills and interests.
+                </p>
+              </div>
+
+              <div className="mb-8">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-gray-700">Profile Completion</span>
+                  <span className="text-sm text-gray-500">{completionPercentage}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${completionPercentage}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {currentUser && (
+                <div className="mb-8 text-left max-w-md mx-auto">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Missing Information:</h3>
+                  <ul className="space-y-2 text-sm text-gray-600">
+                    {!currentUser.first_name && (
+                      <li className="flex items-center">
+                        <span className="w-2 h-2 bg-red-400 rounded-full mr-2"></span>
+                        First Name
+                      </li>
+                    )}
+                    {!currentUser.last_name && (
+                      <li className="flex items-center">
+                        <span className="w-2 h-2 bg-red-400 rounded-full mr-2"></span>
+                        Last Name
+                      </li>
+                    )}
+                    {!currentUser.level && (
+                      <li className="flex items-center">
+                        <span className="w-2 h-2 bg-red-400 rounded-full mr-2"></span>
+                        Skill Level
+                      </li>
+                    )}
+                    {!currentUser.consulting && !currentUser.mna && !currentUser.quant && (
+                      <li className="flex items-center">
+                        <span className="w-2 h-2 bg-red-400 rounded-full mr-2"></span>
+                        At least one interest area
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <a href="/profile" className="btn-primary inline-block">
+                  Complete Profile
+                </a>
+                <div>
+                  <a href="/" className="text-blue-600 hover:text-blue-800 text-sm">
+                    ← Back to Dashboard
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </AuthGuard>
     );
@@ -369,50 +470,61 @@ export default function MatchPage() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {sessions.slice(0, 5).map((session) => (
-                      <div key={session.id} className="card p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Calendar className="h-4 w-4 mr-1" />
-                            {session.date}
+                    {sessions.slice(0, 5).map((session) => {
+                      const isCompleted = isSessionCompleted(session.date);
+                      return (
+                        <div 
+                          key={session.id} 
+                          className={`card p-4 ${isCompleted ? 'bg-gray-50 border-gray-200' : ''}`}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex items-center text-sm text-gray-600">
+                              <Calendar className="h-4 w-4 mr-1" />
+                              {session.date}
+                              {isCompleted && (
+                                <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                  Completed
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex space-x-1">
+                              <a
+                                href={`/sessions/${session.id}`}
+                                className={`${isCompleted ? 'text-gray-500 hover:text-gray-700' : 'text-blue-600 hover:text-blue-800'}`}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </a>
+                              <button
+                                onClick={() => handleDeleteSession(session.id)}
+                                className={`${isCompleted ? 'text-gray-500 hover:text-gray-700' : 'text-red-600 hover:text-red-800'}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
                           </div>
-                          <div className="flex space-x-1">
-                            <a
-                              href={`/sessions/${session.id}`}
-                              className="text-blue-600 hover:text-blue-800"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </a>
-                            <button
-                              onClick={() => handleDeleteSession(session.id)}
-                              className="text-red-600 hover:text-red-800"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
+
+                          <div className={`flex items-center text-sm mb-1 ${isCompleted ? 'text-gray-500' : 'text-gray-600'}`}>
+                            <Clock className="h-4 w-4 mr-1" />
+                            {session.time}
                           </div>
-                        </div>
 
-                        <div className="flex items-center text-sm text-gray-600 mb-1">
-                          <Clock className="h-4 w-4 mr-1" />
-                          {session.time}
-                        </div>
+                          <div className={`flex items-center text-sm mb-2 ${isCompleted ? 'text-gray-500' : 'text-gray-600'}`}>
+                            {session.format === "Video Call" ? (
+                              <Video className="h-4 w-4 mr-1" />
+                            ) : (
+                              <MapPin className="h-4 w-4 mr-1" />
+                            )}
+                            {session.format}
+                          </div>
 
-                        <div className="flex items-center text-sm text-gray-600 mb-2">
-                          {session.format === "Video Call" ? (
-                            <Video className="h-4 w-4 mr-1" />
-                          ) : (
-                            <MapPin className="h-4 w-4 mr-1" />
+                          {session.topic && (
+                            <p className={`text-sm ${isCompleted ? 'text-gray-500' : 'text-gray-700'}`}>
+                              {session.topic}
+                            </p>
                           )}
-                          {session.format}
                         </div>
-
-                        {session.topic && (
-                          <p className="text-sm text-gray-700">
-                            {session.topic}
-                          </p>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
 
                     {sessions.length > 5 && (
                       <a

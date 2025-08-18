@@ -18,6 +18,12 @@ export default function SessionsPage() {
     loadSessions()
   }, [])
 
+  // Check if a session is completed (past date)
+  const isSessionCompleted = (sessionDate: string) => {
+    const today = new Date().toISOString().split('T')[0];
+    return sessionDate < today;
+  };
+
   const loadSessions = async () => {
     try {
       setLoading(true)
@@ -32,8 +38,8 @@ export default function SessionsPage() {
             participant2_profile:profiles!participant2(*)
           `)
           .or(`participant1.eq.${user.id},participant2.eq.${user.id}`)
-          .order('date', { ascending: true })
-          .order('time', { ascending: true })
+          .order('date', { ascending: false })
+          .order('time', { ascending: false })
 
         setSessions(sessionsData || [])
       }
@@ -97,10 +103,10 @@ export default function SessionsPage() {
                 <Users className="h-4 w-4 mr-2" />
                 Find Partners
               </Link>
-              <Link href="/sessions/create" className="btn-primary flex items-center">
+              {/*<Link href="/sessions/create" className="btn-primary flex items-center">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Session
-              </Link>
+              </Link>*/}
             </div>
           </div>
 
@@ -120,95 +126,106 @@ export default function SessionsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {sessions.map((session) => (
-                <div key={session.id} className="card hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {session.topic || 'Case Study Session'}
-                        </h3>
-                        <div className="ml-3 flex items-center">
-                          {session.format === 'Video Call' ? (
-                            <Video className="h-4 w-4 text-blue-500 mr-1" />
-                          ) : (
-                            <MapPin className="h-4 w-4 text-green-500 mr-1" />
+              {sessions.map((session) => {
+                const isCompleted = isSessionCompleted(session.date);
+                return (
+                  <div 
+                    key={session.id} 
+                    className={`card hover:shadow-md transition-shadow ${isCompleted ? 'bg-gray-50 border-gray-200' : ''}`}
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center mb-2">
+                          <h3 className={`text-lg font-semibold ${isCompleted ? 'text-gray-600' : 'text-gray-900'}`}>
+                            {session.topic || 'Case Study Session'}
+                          </h3>
+                          {isCompleted && (
+                            <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                              Completed
+                            </span>
                           )}
-                          <span className="text-sm text-gray-600">{session.format}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center text-gray-600 mb-2">
-                        <Calendar className="h-4 w-4 mr-1" />
-                        <span>{formatDate(session.date)}</span>
-                        <Clock className="h-4 w-4 ml-3 mr-1" />
-                        <span>{formatTime(session.time)}</span>
-                      </div>
-
-                      {session.participant1_profile && session.participant2_profile && (
-                        <div className="space-y-2">
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Users className="h-4 w-4 mr-1" />
-                            <span className="font-medium">Participants:</span>
-                          </div>
-                          <div className="ml-5 space-y-1">
-                            <div className="text-sm">
-                              <span className="font-medium">
-                                {session.participant1_profile.first_name || 'Student'} {session.participant1_profile.last_name || ''}
-                              </span>
-                              {session.participant1_profile.phone_number && (
-                                <div className="flex items-center text-xs text-gray-500 mt-1">
-                                  <Phone className="h-3 w-3 mr-1" />
-                                  {session.participant1_profile.phone_number}
-                                </div>
-                              )}
-                            </div>
-                            <div className="text-sm">
-                              <span className="font-medium">
-                                {session.participant2_profile.first_name || 'Student'} {session.participant2_profile.last_name || ''}
-                              </span>
-                              {session.participant2_profile.phone_number && (
-                                <div className="flex items-center text-xs text-gray-500 mt-1">
-                                  <Phone className="h-3 w-3 mr-1" />
-                                  {session.participant2_profile.phone_number}
-                                </div>
-                              )}
-                            </div>
+                          <div className="ml-3 flex items-center">
+                            {session.format === 'Video Call' ? (
+                              <Video className={`h-4 w-4 mr-1 ${isCompleted ? 'text-gray-400' : 'text-blue-500'}`} />
+                            ) : (
+                              <MapPin className={`h-4 w-4 mr-1 ${isCompleted ? 'text-gray-400' : 'text-green-500'}`} />
+                            )}
+                            <span className={`text-sm ${isCompleted ? 'text-gray-500' : 'text-gray-600'}`}>{session.format}</span>
                           </div>
                         </div>
-                      )}
-                    </div>
+                        
+                        <div className={`flex items-center mb-2 ${isCompleted ? 'text-gray-500' : 'text-gray-600'}`}>
+                          <Calendar className="h-4 w-4 mr-1" />
+                          <span>{formatDate(session.date)}</span>
+                          <Clock className="h-4 w-4 ml-3 mr-1" />
+                          <span>{formatTime(session.time)}</span>
+                        </div>
 
-                    <div className="flex items-center space-x-2 ml-4">
-                      {session.meet_link && (
-                        <a
-                          href={session.meet_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn-secondary text-sm"
+                        {session.participant1_profile && session.participant2_profile && (
+                          <div className="space-y-2">
+                            <div className={`flex items-center text-sm ${isCompleted ? 'text-gray-500' : 'text-gray-600'}`}>
+                              <Users className="h-4 w-4 mr-1" />
+                              <span className="font-medium">Participants:</span>
+                            </div>
+                            <div className="ml-5 space-y-1">
+                              <div className="text-sm">
+                                <span className={`font-medium ${isCompleted ? 'text-gray-500' : 'text-gray-900'}`}>
+                                  {session.participant1_profile.first_name || 'Student'} {session.participant1_profile.last_name || ''}
+                                </span>
+                                {session.participant1_profile.phone_number && (
+                                  <div className="flex items-center text-xs text-gray-500 mt-1">
+                                    <Phone className="h-3 w-3 mr-1" />
+                                    {session.participant1_profile.phone_number}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="text-sm">
+                                <span className={`font-medium ${isCompleted ? 'text-gray-500' : 'text-gray-900'}`}>
+                                  {session.participant2_profile.first_name || 'Student'} {session.participant2_profile.last_name || ''}
+                                </span>
+                                {session.participant2_profile.phone_number && (
+                                  <div className="flex items-center text-xs text-gray-500 mt-1">
+                                    <Phone className="h-3 w-3 mr-1" />
+                                    {session.participant2_profile.phone_number}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center space-x-2 ml-4">
+                        {session.meet_link && !isCompleted && (
+                          <a
+                            href={session.meet_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn-secondary text-sm"
+                          >
+                            Join Meeting
+                          </a>
+                        )}
+                        <Link
+                          href={`/sessions/${session.id}`}
+                          className={`p-1 ${isCompleted ? 'text-gray-500 hover:text-gray-700' : 'text-blue-600 hover:text-blue-800'}`}
+                          title="Edit session"
                         >
-                          Join Meeting
-                        </a>
-                      )}
-                      <Link
-                        href={`/sessions/${session.id}`}
-                        className="text-blue-600 hover:text-blue-800 p-1"
-                        title="Edit session"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Link>
-                      <button
-                        onClick={() => handleDeleteSession(session.id)}
-                        disabled={deleting === session.id}
-                        className="text-red-600 hover:text-red-800 p-1 disabled:opacity-50"
-                        title="Delete session"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                          <Edit className="h-4 w-4" />
+                        </Link>
+                        <button
+                          onClick={() => handleDeleteSession(session.id)}
+                          disabled={deleting === session.id}
+                          className={`p-1 disabled:opacity-50 ${isCompleted ? 'text-gray-500 hover:text-gray-700' : 'text-red-600 hover:text-red-800'}`}
+                          title="Delete session"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
